@@ -128,29 +128,31 @@ function classifyIntent(text) {
         const match = text.match(rule.regex);
         if (match) {
             let score = 0;
+            const cleanNumber = match[0].replace(/[\s-]/g, '');
+
             // Boost score if carrier name is explicitly in text
             if (textUpper.includes(rule.carrier.toUpperCase())) {
-                score += 10;
+                score += 20; // Stronger boost
+            } else {
+                // PENALIZE if the text explicitly mentions a DIFFERENT carrier
+                // Example: If text says "USPS" but we matched a "FedEx" rule, heavily penalize it.
+                if (rule.carrier === 'FedEx' && textUpper.includes('USPS')) score -= 50;
+                if (rule.carrier === 'USPS' && textUpper.includes('FEDEX')) score -= 50;
+                if (rule.carrier === 'UPS' && textUpper.includes('FEDEX')) score -= 50;
             }
 
-            // Boost score for longer numbers (usually more specific)
-            score += match[0].length;
+            // Boost score for longer numbers (longer is usually more specific and less likely to be random noise)
+            score += cleanNumber.length;
 
-            // Tie-breaker logic for overlap (20 digits)
-            if (match[0].length === 20) {
-                if (rule.carrier === 'USPS' && textUpper.includes('USPS')) score += 20;
-                if (rule.carrier === 'FedEx' && textUpper.includes('FEDEX')) score += 20;
-            }
-
-            if (score > bestScore) {
+            if (score > bestScore && score > 5) { // Threshold to avoid trash matches
                 bestScore = score;
                 bestMatch = {
                     type: 'TRACKING',
                     carrier: rule.carrier,
-                    number: match[0],
+                    number: cleanNumber,
                     title: `Track ${rule.carrier}`,
-                    desc: `Detected ${rule.carrier} tracking number: ${match[0]}`,
-                    url: `https://www.google.com/search?q=${rule.carrier}+tracking+${match[0]}`
+                    desc: `Detected ${rule.carrier} tracking number: ${cleanNumber}`,
+                    url: `https://www.google.com/search?q=${rule.carrier}+tracking+${cleanNumber}`
                 };
             }
         }
