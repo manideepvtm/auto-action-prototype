@@ -15,13 +15,19 @@ const ocrResult = document.getElementById('ocr-result');
 
 // Regex Patterns (Ported from Kotlin)
 const PATTERNS = {
-    TRACKING: {
-        FedEx: /\b(\d{12}|\d{15}|\d{20})\b/,
-        UPS: /\b(1Z[0-9A-Z]{16})\b/,
-        USPS: /\b(\d{20,22})\b/,
-        Amazon: /\b(TBA[0-9]{12})\b/,
-        DHL: /\b(\d{10})\b/
-    },
+    // Regex Patterns (Improved)
+    // Note: We will now use a list of objects to control order and add metadata
+    TRACKING_RULES: [
+        { carrier: 'UPS', regex: /\b(1Z[0-9A-Z]{16})\b/ },
+        { carrier: 'Amazon', regex: /\b(TBA[0-9]{12})\b/ },
+        { carrier: 'USPS', regex: /\b(\d{22})\b/ }, // 22 digits is almost exclusively USPS
+        { carrier: 'USPS', regex: /\b(9\d{21})\b/ }, // Starts with 9, 22 digits
+        { carrier: 'USPS', regex: /\b(\d{20})\b/ }, // 20 digits (overlap with FedEx but refined by logic)
+        { carrier: 'FedEx', regex: /\b(\d{12})\b/ }, // Standard Express
+        { carrier: 'FedEx', regex: /\b(\d{15})\b/ }, // Ground
+        { carrier: 'FedEx', regex: /\b(\d{20})\b/ }, // Ground (96...) - Overlap!
+        { carrier: 'DHL', regex: /\b(\d{10})\b/ }
+    ],
     DATE: /\b(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})\b/,
     TIME: /\b(\d{1,2}:\d{2}\s?(AM|PM)?)\b/i,
     ADDRESS_KEYWORDS: ["Street", "St.", "Avenue", "Ave", "Road", "Rd", "Boulevard", "Blvd", "Lane", "Ln", "Drive", "Dr"],
@@ -108,19 +114,52 @@ async function processImage(file) {
 }
 
 function classifyIntent(text) {
+    const textUpper = text.toUpperCase();
+
     // 1. Tracking
-    for (const [carrier, regex] of Object.entries(PATTERNS.TRACKING)) {
-        const match = text.match(regex);
+    // Strategy: Score matches based on presence of keywords. 
+    // If specific carrier keyword is found in text, prioritize that carrier.
+
+    let bestMatch = null;
+    let bestScore = -1;
+
+    for (const rule of PATTERNS.TRACKING_RULES) {
+        const match = text.match(rule.regex);
         if (match) {
-            return {
-                type: 'TRACKING',
-                carrier: carrier,
-                number: match[0],
-                title: 'Track Package',
-                desc: `Detected ${carrier} tracking number: ${match[0]}`,
-                url: `https://www.google.com/search?q=${carrier}+tracking+${match[0]}`
-            };
+            let score = 0;
+            // Boost score if carrier name is explicitly in text
+            if (textUpper.includes(rule.carrier.toUpperCase())) {
+                score += 10;
+            }
+
+            // Boost score for longer numbers (usually more specific)
+            score += match[0].length;
+
+            // Tie-breaker logic for overlap (20 digits)
+            if (match[0].length === 20) {
+                if (rule.carrier === 'USPS' && textUpper.includes('USPS')) score += 20;
+                if (rule.carrier === 'FedEx' && textUpper.includes('FEDEX')) score += 20;
+            }
+
+            if (score > bestScore) {
+                bestScore = score;
+                bestMatch = {
+                    type: 'TRACKING',
+                    carrier: rule.carrier,
+                    number: match[0],
+                    title: `Track ${rule.carrier}`,
+                    desc: `Detected ${rule.carrier} tracking number: ${match[0]}`,
+                    url: `https://www.google.com/search?q=${rule.carrier}+tracking+${match[0]}`
+                };
+            }
         }
+    }
+
+    // If found a match with decent confidence or keyword backing
+    if (bestMatch) {
+        // Sanity check: If score is low (just digits) and we have multiple candidates, maybe hold off?
+        // For MVP, just return the best fit.
+        return bestMatch;
     }
 
     // 2. Address
