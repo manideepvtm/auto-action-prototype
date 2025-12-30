@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,10 +12,11 @@
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script src="app.js" defer></script>
 </head>
+
 <body>
     <div class="container">
         <header>
-            <h1>AutoAction</h1>
+            <h1>AutoAction <span style="font-size: 0.4em; vertical-align: middle; opacity: 0.6;">v2.0</span></h1>
             <p class="subtitle">Zero friction. Relevant actions.</p>
         </header>
 
@@ -40,7 +42,7 @@
                     <a id="action-button" href="#" target="_blank" class="action-btn">Execute Action</a>
                 </div>
             </div>
-            
+
             <div id="log-container" class="hidden">
                 <h3>Extracted Text (Debug)</h3>
                 <pre id="ocr-result"></pre>
@@ -48,4 +50,5 @@
         </main>
     </div>
 </body>
+
 </html>
