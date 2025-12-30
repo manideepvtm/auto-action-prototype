@@ -20,12 +20,13 @@ const PATTERNS = {
     TRACKING_RULES: [
         { carrier: 'UPS', regex: /\b(1Z[0-9A-Z]{16})\b/ },
         { carrier: 'Amazon', regex: /\b(TBA[0-9]{12})\b/ },
-        { carrier: 'USPS', regex: /\b(\d{22})\b/ }, // 22 digits is almost exclusively USPS
-        { carrier: 'USPS', regex: /\b(9\d{21})\b/ }, // Starts with 9, 22 digits
-        { carrier: 'USPS', regex: /\b(\d{20})\b/ }, // 20 digits (overlap with FedEx but refined by logic)
-        { carrier: 'FedEx', regex: /\b(\d{12})\b/ }, // Standard Express
-        { carrier: 'FedEx', regex: /\b(\d{15})\b/ }, // Ground
-        { carrier: 'FedEx', regex: /\b(\d{20})\b/ }, // Ground (96...) - Overlap!
+        // USPS Spaced Pattern (matches 9xxx xxxx xxxx ... format common on labels)
+        { carrier: 'USPS', regex: /\b(9\d{3}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{2})\b/ },
+        { carrier: 'USPS', regex: /\b(\d{22})\b/ },
+        { carrier: 'USPS', regex: /\b(9\d{21})\b/ },
+        { carrier: 'FedEx', regex: /\b(\d{12})\b/ },
+        { carrier: 'FedEx', regex: /\b(\d{15})\b/ },
+        { carrier: 'FedEx', regex: /\b(\d{20})\b/ },
         { carrier: 'DHL', regex: /\b(\d{10})\b/ }
     ],
     DATE: /\b(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})\b/,
