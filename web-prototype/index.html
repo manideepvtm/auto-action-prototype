@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoAction Prototype</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <script src="app.js" defer></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>AutoAction</h1>
+            <p class="subtitle">Zero friction. Relevant actions.</p>
+        </header>
+
+        <main>
+            <div class="upload-area" id="drop-area">
+                <input type="file" id="fileElem" accept="image/*" onchange="handleFiles(this.files)">
+                <label class="button" for="fileElem">Upload Screenshot</label>
+                <p class="desktop-hint">or drag and drop here</p>
+                <div id="loading" class="hidden">
+                    <div class="spinner"></div>
+                    <p id="status-text">Initializing OCR...</p>
+                </div>
+            </div>
+
+            <div id="preview-container" class="hidden">
+                <img id="preview-image" src="" alt="Screenshot Preview">
+            </div>
+
+            <div id="result-card" class="card hidden">
+                <div id="card-content">
+                    <h2 id="action-title">Action Title</h2>
+                    <p id="action-desc">Action description goes here.</p>
+                    <a id="action-button" href="#" target="_blank" class="action-btn">Execute Action</a>
+                </div>
+            </div>
+            
+            <div id="log-container" class="hidden">
+                <h3>Extracted Text (Debug)</h3>
+                <pre id="ocr-result"></pre>
+            </div>
+        </main>
+    </div>
+</body>
+</html>
