@@ -52,8 +52,34 @@ class NotificationHelper(private val context: Context) {
             is ActionIntent.AddCalendarEvent -> "Add to Calendar" to Intent(Intent.ACTION_INSERT).apply {
                 data = android.provider.CalendarContract.Events.CONTENT_URI
                 putExtra(android.provider.CalendarContract.Events.TITLE, intent.title)
-                // Parsing date/time to millis is complex, simplest is to let Calendar app handle parsing or just open it. 
-                // For MVP, just opening insert intent might work if we accept defaults or just title.
+                putExtra(android.provider.CalendarContract.Events.DESCRIPTION, "Detected auto-action")
+                
+                // Parse date to set correct time
+                try {
+                     val formats = listOf(
+                        java.text.SimpleDateFormat("MM/dd/yyyy", java.util.Locale.US),
+                        java.text.SimpleDateFormat("MM-dd-yyyy", java.util.Locale.US),
+                        java.text.SimpleDateFormat("M/d/yyyy", java.util.Locale.US)
+                    )
+                    var dateMillis: Long? = null
+                    for (sdf in formats) {
+                        try {
+                             val d = sdf.parse(intent.date)
+                             if (d != null) {
+                                 dateMillis = d.time
+                                 break
+                             }
+                        } catch (e: Exception) {}
+                    }
+                    
+                    if (dateMillis != null) {
+                        putExtra(android.provider.CalendarContract.EXTRA_EVENT_ALL_DAY, true)
+                        putExtra(android.provider.CalendarContract.EXTRA_EVENT_BEGIN_TIME, dateMillis)
+                        putExtra(android.provider.CalendarContract.EXTRA_EVENT_END_TIME, dateMillis)
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
             }
             is ActionIntent.SaveExpense -> "Save Expense" to null // Handled internally
             is ActionIntent.SearchError -> "Search Error" to Intent(Intent.ACTION_VIEW, Uri.parse("https://www.google.com/search?q=${intent.errorCode}"))
