@@ -36,13 +36,16 @@ object IntentClassifier {
 
     fun classify(text: String): ActionIntent {
         val textUpper = text.uppercase()
+        // Remove spaces/dashes between digits: "9434 6301" -> "94346301"
+        val cleanText = text.replace(Regex("(\\d)[\\s-]+(?=\\d)"), "$1")
 
         // 1. Check for Tracking Numbers with Scoring
         var bestMatch: ActionIntent.TrackPackage? = null
         var bestScore = -1
 
         for (rule in TRACKING_RULES) {
-            val matcher = Pattern.compile(rule.regex).matcher(text)
+            // Check against CLEAN text
+            val matcher = Pattern.compile(rule.regex).matcher(cleanText)
             if (matcher.find()) {
                 val number = matcher.group(0)
                 var score = 0
